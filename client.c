@@ -1,4 +1,3 @@
-// #include	"unp.h"
 #include <sys/types.h>  /* basic system data types */
 #include <sys/socket.h> /* basic socket definitions */
 #include <sys/time.h>   /* timeval{} for select() */
@@ -22,7 +21,8 @@
 #define MAXLINE 1024
 #define SA struct sockaddr
 
-void str_cli(FILE *fp, int sockfd);
+void str_cli_white(FILE *fp, int sockfd);
+void str_cli_black(FILE *fp, int sockfd);
 
 int main(int argc, char **argv)
 {
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin6_family = AF_INET6;
-    servaddr.sin6_port = htons(7); /* echo server */
+    servaddr.sin6_port = htons(20); /* echo server */
     if (inet_pton(AF_INET6, argv[1], &servaddr.sin6_addr) <= 0)
     {
         fprintf(stderr, "inet_pton error for %s : \n", argv[1]);
@@ -54,8 +54,26 @@ int main(int argc, char **argv)
         fprintf(stderr, "connect error : %s \n", strerror(errno));
         return 1;
     }
+    int myNum;
 
-    str_cli(stdin, sockfd); /* do it all */
+    printf("1- Black pieces\n2- White pieces\n");
+    scanf("%d", &myNum);;
+
+    if(myNum == 1)
+    {
+        printf("Playing as black\n\n");
+        str_cli_black(stdin, sockfd); /* do it all */
+    }
+    else if(myNum == 2)
+    {
+        printf("Playing as white\n\n");
+        str_cli_white(stdin, sockfd); /* do it all */
+    }
+    else
+    {
+        printf("Erorr\n\n");
+    }
+
 
     fprintf(stderr, "OK\n");
     fflush(stderr);
@@ -63,19 +81,21 @@ int main(int argc, char **argv)
     exit(0);
 }
 
-
-void str_cli(FILE *fp, int sockfd)
+//bialy
+//print szachownica
+//fgets
+//write
+//read
+void str_cli_white(FILE *fp, int sockfd)
 {
     char sendline[MAXLINE], recvline[MAXLINE];
-
-    printf("Enter text:");
 
     bzero(recvline, sizeof(recvline));
     bzero(sendline, sizeof(sendline));
 
-    while (fgets(sendline, MAXLINE, fp) != NULL)
+    while (1)
     {
-
+        fgets(sendline, MAXLINE, fp);
         write(sockfd, sendline, strlen(sendline));
 
         if (read(sockfd, recvline, MAXLINE) == 0)
@@ -86,6 +106,38 @@ void str_cli(FILE *fp, int sockfd)
 
         fputs(recvline, stdout);
         printf("Enter text:");
+		bzero(recvline, sizeof(recvline));
+    	bzero(sendline, sizeof(sendline));
+    }
+}
+
+
+//czorny
+//read
+//print szachownice
+//fputs
+//print szachownice
+//fgets
+//write
+void str_cli_black(FILE *fp, int sockfd)
+{
+    char sendline[MAXLINE], recvline[MAXLINE];
+
+    bzero(recvline, sizeof(recvline));
+    bzero(sendline, sizeof(sendline));
+
+    while (1)
+    {
+        if (read(sockfd, recvline, MAXLINE) == 0)
+        {
+            perror("str_cli: server terminated prematurely");
+            exit(0);
+        }
+        fputs(recvline, stdout);
+        printf("Enter text:");
+        fgets(sendline, MAXLINE, fp);
+        write(sockfd, sendline, strlen(sendline));
+
 		bzero(recvline, sizeof(recvline));
     	bzero(sendline, sizeof(sendline));
     }

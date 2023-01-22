@@ -18,12 +18,15 @@
 
 #define LISTENQ 2
 
-// TO DO
-
-// jak serwer rozpoznaje do kogo wyslac wiadomosc?
-// teraz poznaje po sockecie
-
-// jak serwer rozpoznaje od kogo odberal?
+// TO DO//////////////////////////////////
+// SERWER
+// musi wysylac wiadomosc o tym czyja jest teraz kolej
+// musi wysylac informacje o ruchu przeciwnika i pobierac informacje o twoim ruchu
+// musi obslugiwac kilka pokoi
+// musi obslugiwac ze jesli jeden z klienta wyjdzie z sesji to drugi klient ma o tym informacje
+// KLIENT
+// w klientach ogarnac jak ruszac sie malymi i wielkimi pionkami
+// odswiezac plansze co jakis czas jesli nie jest twoja kolej na ruch
 
 struct client
 {
@@ -42,11 +45,12 @@ void sig_chld(int signo) // funckja UBIJANAI dzieci
     return;
 }
 
-void str_echo(int sockfd1, int sockfd2) // komunikacja z klientem
+void play(int sockfd1, int sockfd2) // komunikacja z klientem
 {
     ssize_t n1, n2;
     char buf1[MAXLINE];
     char buf2[MAXLINE];
+    int player = 1;
 
     while (1)
     {
@@ -54,32 +58,34 @@ void str_echo(int sockfd1, int sockfd2) // komunikacja z klientem
         // klient 1 tylko napisze to czeka na odbieranie danych
         // skoro klient 2 nic nie pisze to klient1 nie odbierze danych i nie wejdzie do write
 
-        while (((n1 = read(sockfd1, buf1, MAXLINE)) > 0) && (n2 = read(sockfd2, buf2, MAXLINE)) > 0) // odibera, zwraca liczbe przeczytanych bajtow
+        if (player == 1)
         {
-
-            if (strcmp(buf2, "exit\n") == 0)
-            {
-                close(sockfd2); // Close the existing socket which is connected to the client
-                exit(0);
-            }
-
-            if (strcmp(buf1, "exit\n") == 0)
+            n1 = read(sockfd1, buf1, MAXLINE);
+            
+                if (strcmp(buf1, "exit\n") == 0)
             {
                 close(sockfd1); // Close the existing socket which is connected to the client
                 exit(0);
             }
 
-            write(sockfd2, buf1, n1); // tu pisze sockfd 4 buff
-            write(sockfd1, buf2, n2);
+            write(sockfd2, buf1, n1);
             bzero(buf1, sizeof(buf1));
-            bzero(buf2, sizeof(buf2));
+            player =2;
         }
 
-        if (n1 < 0 && errno == EINTR)
-            continue;
+        if(player==2){
+             n2 = read(sockfd2, buf2, MAXLINE);
 
-        else if (n1 < 0)
-            perror("str_echo: read error");
+             if (strcmp(buf2, "exit\n") == 0)
+            {
+                close(sockfd2); // Close the existing socket which is connected to the client
+                exit(0);
+            }
+
+            write(sockfd1, buf2, n2); // tu pisze sockfd 4 buff
+            bzero(buf2, sizeof(buf2));
+            player=1;
+        }
     }
 }
 
@@ -89,7 +95,7 @@ int main(int argc, char **argv)
     pid_t childpid;
     socklen_t clilen;
     struct client clients[2];
-    struct sockaddr_in6 cliaddr, servaddr;
+    struct sockaddr_in6 servaddr;
     void sig_chld(int);
     int userId = 0;
 
@@ -109,7 +115,7 @@ int main(int argc, char **argv)
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin6_family = AF_INET6;
     servaddr.sin6_addr = in6addr_any;
-    servaddr.sin6_port = htons(7); /* echo server */
+    servaddr.sin6_port = htons(20); /* echo server */
 
     if (bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
     {
@@ -125,8 +131,8 @@ int main(int argc, char **argv)
 
     while (1)
     {
-        clilen = sizeof(cliaddr);
-        if ((connfd = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen)) < 0)
+        clilen = sizeof(clients->addr);
+        if ((connfd = accept(listenfd, (struct sockaddr *)&clients->addr, &clilen)) < 0)
         {
             if (errno == EINTR)
                 continue; /* back to while() */
@@ -136,7 +142,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            clients[userId].addr = cliaddr;
+            clients[userId].addr = clients->addr;
             clients[userId].sockfd = connfd;
             ++userId;
         }
@@ -144,13 +150,15 @@ int main(int argc, char **argv)
         if (userId > 1)
         {
             if ((childpid = fork()) == 0)
-            {                                                                     /* child process */
+            { /* child process */
+                // ustaiwnie zmiennej odpowiedzialnej za sesje (ze rozpoczela sie nowa)
+                // newRoom = 0
                 close(listenfd);
-                printf("sockfd1: %d\n", clients[userId - 2].sockfd);                                              /* close listening socket */
-                printf("sockfd2: %d\n", clients[userId - 1].sockfd);
-                printf("por1: %d\n", ntohs(clients[userId - 2].addr.sin6_port));
-                printf("por2: %d\n", ntohs(clients[userId - 1].addr.sin6_port));
-                str_echo(clients[userId - 2].sockfd, clients[userId - 1].sockfd); /* process the request */
+                printf("sockfd1: %d\n", clients[0].sockfd); /* close listening socket */
+                printf("sockfd2: %d\n", clients[1].sockfd);
+                printf("por1: %d\n", ntohs(clients[0].addr.sin6_port));
+                printf("por2: %d\n", ntohs(clients[1].addr.sin6_port));
+                play(clients[0].sockfd, clients[1].sockfd); /* process the request */
                 exit(0);
             }
             close(connfd); /* parent closes connected socket */
