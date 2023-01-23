@@ -18,16 +18,6 @@
 
 #define LISTENQ 2
 
-// TO DO//////////////////////////////////
-// SERWER
-// musi wysylac wiadomosc o tym czyja jest teraz kolej
-// musi wysylac informacje o ruchu przeciwnika i pobierac informacje o twoim ruchu
-// musi obslugiwac kilka pokoi
-// musi obslugiwac ze jesli jeden z klienta wyjdzie z sesji to drugi klient ma o tym informacje
-// KLIENT
-// w klientach ogarnac jak ruszac sie malymi i wielkimi pionkami
-// odswiezac plansze co jakis czas jesli nie jest twoja kolej na ruch
-
 struct client
 {
     struct sockaddr_in6 addr;
@@ -35,7 +25,7 @@ struct client
     int clientId;
 };
 
-void sig_chld(int signo) // funckja UBIJANAI dzieci
+void sig_chld(int signo)
 {
     pid_t pid;
     int stat;
@@ -56,15 +46,11 @@ void play(int sockfd1, int sockfd2) // komunikacja z klientem
 
     while (1)
     {
-        // w kliecnie write ->read
-        // klient 1 tylko napisze to czeka na odbieranie danych
-        // skoro klient 2 nic nie pisze to klient1 nie odbierze danych i nie wejdzie do write
-
         if (player == 1)
         {
             n1 = read(sockfd1, buf1, MAXLINE);
-            
-                if (strcmp(buf1, "exit\n") == 0)
+
+            if (strcmp(buf1, "exit\n") == 0)
             {
                 close(sockfd1); // Close the existing socket which is connected to the client
                 exit(0);
@@ -72,13 +58,14 @@ void play(int sockfd1, int sockfd2) // komunikacja z klientem
 
             write(sockfd2, buf1, n1);
             bzero(buf1, sizeof(buf1));
-            player =2;
+            player = 2;
         }
 
-        if(player==2){
-             n2 = read(sockfd2, buf2, MAXLINE);
+        if (player == 2)
+        {
+            n2 = read(sockfd2, buf2, MAXLINE);
 
-             if (strcmp(buf2, "exit\n") == 0)
+            if (strcmp(buf2, "exit\n") == 0)
             {
                 close(sockfd2); // Close the existing socket which is connected to the client
                 exit(0);
@@ -86,7 +73,7 @@ void play(int sockfd1, int sockfd2) // komunikacja z klientem
 
             write(sockfd1, buf2, n2); // tu pisze sockfd 4 buff
             bzero(buf2, sizeof(buf2));
-            player=1;
+            player = 1;
         }
     }
 }
@@ -117,7 +104,7 @@ int main(int argc, char **argv)
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin6_family = AF_INET6;
     servaddr.sin6_addr = in6addr_any;
-    servaddr.sin6_port = htons(20); /* echo server */
+    servaddr.sin6_port = htons(20);
 
     if (bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
     {
@@ -137,7 +124,7 @@ int main(int argc, char **argv)
         if ((connfd = accept(listenfd, (struct sockaddr *)&clients->addr, &clilen)) < 0)
         {
             if (errno == EINTR)
-                continue; /* back to while() */
+                continue;
             else
                 perror("accept error");
             exit(1);
@@ -152,18 +139,17 @@ int main(int argc, char **argv)
         if (userId > 1)
         {
             if ((childpid = fork()) == 0)
-            { /* child process */
-                // ustaiwnie zmiennej odpowiedzialnej za sesje (ze rozpoczela sie nowa)
-                // newRoom = 0
+            {
                 close(listenfd);
-                printf("sockfd1: %d\n", clients[0].sockfd); /* close listening socket */
+                printf("sockfd1: %d\n", clients[0].sockfd);
                 printf("sockfd2: %d\n", clients[1].sockfd);
                 printf("port1: %d\n", ntohs(clients[0].addr.sin6_port));
                 printf("port2: %d\n", ntohs(clients[1].addr.sin6_port));
-                play(clients[0].sockfd, clients[1].sockfd); /* process the request */
+                play(clients[0].sockfd, clients[1].sockfd);
                 exit(0);
             }
-            close(connfd); /* parent closes connected socket */
+            close(clients[0].sockfd);
+            close(clients[1].sockfd);
         }
     }
 }

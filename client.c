@@ -80,7 +80,7 @@ void str_cli_white(FILE *fp, int sockfd)
         {
             printf("Podaj pole pionka ktorym chcesz wykonac ruch i jego pole docelowe <np. A0 B4>:\n");
         }
-        x++; // nie przyznaje sie do tego ;)
+        x++;
         fgets(sendline, MAXLINE, fp);
 
         if (sendline[1] >= 48 && sendline[1] <= 57) // garbage handler
@@ -93,8 +93,6 @@ void str_cli_white(FILE *fp, int sockfd)
         }
 
         write(sockfd, sendline, strlen(sendline));
-
-        // diwe polowy
 
         if (read(sockfd, recvline, MAXLINE) == 0)
         {
@@ -143,7 +141,6 @@ void str_cli_black(FILE *fp, int sockfd)
             printf("Podaj pole pionka ktorym chcesz wykonac ruch i jego pole docelowe <np. A0 B4>:\n");
         }
 
-    // typeAgain:
         bzero(sendline, sizeof(sendline));
         fgets(sendline, MAXLINE, fp);
         if (sendline[1] >= 48 && sendline[1] <= 57) // garbage handler
@@ -153,12 +150,6 @@ void str_cli_black(FILE *fp, int sockfd)
             display();
             printf("Wykonales posuniecie! Czekaj na ruch przeciwnika\n");
         }
-        // else
-        // {
-        //     bzero(sendline, sizeof(sendline));
-        //     printf("Wprowadz poprawny ruch.");
-        //     goto typeAgain;
-        // }
 
         write(sockfd, sendline, strlen(sendline));
 
@@ -188,7 +179,7 @@ int main(int argc, char **argv)
 
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin6_family = AF_INET6;
-    servaddr.sin6_port = htons(20); /* echo server */
+    servaddr.sin6_port = htons(20);
     if (inet_pton(AF_INET6, argv[1], &servaddr.sin6_addr) <= 0)
     {
         fprintf(stderr, "inet_pton error for %s : \n", argv[1]);
