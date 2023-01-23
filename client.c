@@ -13,12 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
-
-//TO DO
-
-//jak serwer
-
-#define MAXLINE 16
+#define MAXLINE 100
 #define SA struct sockaddr
 
 char rows[8] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
@@ -56,30 +51,24 @@ void display()
         ++counter;
     }
     printf("|\n  ---------------------------------\n\n");
-}    
+}
 
 void chess_game(char player[])
 {
     int ValueStart = (player[0] - 65) * 8 + (player[1] - 48) - 1; // - 48 bo zero
     int ValueEnd = (player[3] - 65) * 8 + (player[4] - 48) - 1;   // - 48 bo zero
-    int figura = board[ValueStart];                           // pobranie figury z pola startowego
-    board[ValueStart] = 45;                                   // wyzerowanie pola startowego 45 to wartosc znaku '-'
-    board[ValueEnd] = figura;       // ustawianie na polu pola startowego
-    //system ("clear");                                 
+    int figura = board[ValueStart];                               // pobranie figury z pola startowego
+    board[ValueStart] = 45;                                       // wyzerowanie pola startowego 45 to wartosc znaku '-'
+    board[ValueEnd] = figura;                                     // ustawianie na polu pola startowego
 }
 
-//bialy
-//print szachownica
-//fgets
-//write
-//read
 void str_cli_white(FILE *fp, int sockfd)
 {
     char sendline[MAXLINE], recvline[MAXLINE];
 
     bzero(recvline, sizeof(recvline));
-    bzero(sendline, sizeof(sendline));  
-    printf("\n\n\n\n\n\n\n\n\n\n\n\n");
+    bzero(sendline, sizeof(sendline));
+    printf("\n\n");
     display();
     printf("You're playing as white (which are capital letters)!\n");
 
@@ -87,14 +76,14 @@ void str_cli_white(FILE *fp, int sockfd)
 
     while (1)
     {
-        if(x != 1)
+        if (x != 1)
         {
             printf("Podaj pole pionka ktorym chcesz wykonac ruch i jego pole docelowe <np. A0 B4>:\n");
         }
-        x ++; //nie przyznaje sie do tego ;)
+        x++; // nie przyznaje sie do tego ;)
         fgets(sendline, MAXLINE, fp);
-        
-        if(sendline[1] >= 48 && sendline[1] <= 57) //garbage handler
+
+        if (sendline[1] >= 48 && sendline[1] <= 57) // garbage handler
         {
             printf("SENDLINE = %s \n", sendline);
             chess_game(sendline);
@@ -102,27 +91,26 @@ void str_cli_white(FILE *fp, int sockfd)
             display();
             printf("Wykonales posuniecie! Czekaj na ruch przeciwnika\n");
         }
-        
+
         write(sockfd, sendline, strlen(sendline));
 
-        //diwe polowy
-         
+        // diwe polowy
+
         if (read(sockfd, recvline, MAXLINE) == 0)
         {
             perror("str_cli_white: server terminated prematurely");
             exit(0);
-        }       
+        }
         fputs(recvline, stdout);
-        if(recvline[1] >= 48 && recvline[1] <= 57)
+        if (recvline[1] >= 48 && recvline[1] <= 57)
         {
             chess_game(recvline);
             system("clear");
-            printf("RECVLINE = %s \n", recvline);
             display();
             printf("Drugi gracz wykonal posuniecie!\n");
         }
-		bzero(recvline, sizeof(recvline));
-    	bzero(sendline, sizeof(sendline));
+        bzero(recvline, sizeof(recvline));
+        bzero(sendline, sizeof(sendline));
     }
 }
 
@@ -133,48 +121,49 @@ void str_cli_black(FILE *fp, int sockfd)
     bzero(recvline, sizeof(recvline));
     bzero(sendline, sizeof(sendline));
 
-    printf("\n\n\n\n\n\n\n\n\n\n\n\n");
+    printf("\n\n");
     display();
     printf("You're playing as black (which are lower case)!\n Wait for start from second player!\n");
-    int x = 0;
 
     while (1)
     {
-
 
         if (read(sockfd, recvline, MAXLINE) == 0)
         {
             perror("str_cli_black: server terminated prematurely");
             exit(0);
         }
-        
-        printf("Podaj pole pionka ktorym chcesz wykonac ruch i jego pole docelowe <np. A0 B4>:\n");
 
-        fputs(recvline, stdout);
-        if(recvline[1] >= 48 && recvline[1] <= 57)
+        if (recvline[1] >= 48 && recvline[1] <= 57)
         {
             chess_game(recvline);
             system("clear");
-            printf("RECVLINE = %s \n", recvline);
             display();
             printf("Drugi gracz wykonal posuniecie! Pora na ciebie!\n");
+            printf("Podaj pole pionka ktorym chcesz wykonac ruch i jego pole docelowe <np. A0 B4>:\n");
         }
 
-
+    // typeAgain:
+        bzero(sendline, sizeof(sendline));
         fgets(sendline, MAXLINE, fp);
-        if(sendline[1] >= 48 && sendline[1] <= 57) //garbage handler
+        if (sendline[1] >= 48 && sendline[1] <= 57) // garbage handler
         {
-            printf("SENDLINE = %s \n", sendline);
             chess_game(sendline);
             system("clear");
             display();
-            printf("Wykonales posuniecie! Czekaj na ruch przeciwnika\n");            
+            printf("Wykonales posuniecie! Czekaj na ruch przeciwnika\n");
         }
-        
+        // else
+        // {
+        //     bzero(sendline, sizeof(sendline));
+        //     printf("Wprowadz poprawny ruch.");
+        //     goto typeAgain;
+        // }
+
         write(sockfd, sendline, strlen(sendline));
 
-		bzero(recvline, sizeof(recvline));
-    	bzero(sendline, sizeof(sendline));
+        bzero(recvline, sizeof(recvline));
+        bzero(sendline, sizeof(sendline));
     }
 }
 
@@ -213,14 +202,15 @@ int main(int argc, char **argv)
     int myNum;
 
     printf("1- Black pieces\n2- White pieces\n");
-    scanf("%d", &myNum);;
+    scanf("%d", &myNum);
+    ;
 
-    if(myNum == 1)
+    if (myNum == 1)
     {
         printf("Playing as black\n\n");
         str_cli_black(stdin, sockfd); /* do it all */
     }
-    else if(myNum == 2)
+    else if (myNum == 2)
     {
         printf("Playing as white\n\n");
         str_cli_white(stdin, sockfd); /* do it all */
@@ -229,7 +219,6 @@ int main(int argc, char **argv)
     {
         printf("Erorr\n\n");
     }
-
 
     fprintf(stderr, "OK\n");
     fflush(stderr);
