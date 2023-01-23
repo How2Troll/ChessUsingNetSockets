@@ -18,11 +18,167 @@
 
 //jak serwer
 
-#define MAXLINE 1024
+#define MAXLINE 16
 #define SA struct sockaddr
 
-void str_cli_white(FILE *fp, int sockfd);
-void str_cli_black(FILE *fp, int sockfd);
+char rows[8] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+
+char board[64] = {
+    'w', 's', 'g', 'k', 'q', 'g', 's', 'w',
+    'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
+    '-', '-', '-', '-', '-', '-', '-', '-',
+    '-', '-', '-', '-', '-', '-', '-', '-',
+    '-', '-', '-', '-', '-', '-', '-', '-',
+    '-', '-', '-', '-', '-', '-', '-', '-',
+    'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P',
+    'W', 'S', 'G', 'Q', 'K', 'G', 'S', 'W'};
+
+void display()
+{
+    int counter = 0;
+    int j = 0;
+    printf("\n\n ");
+    for (int i = 0; i < 8; i++)
+    {
+        printf("   %d", i + 1);
+    }
+    printf("\n  ---------------------------------\nA ");
+    for (int i = 0; i < sizeof(board); i++)
+    {
+
+        if (counter == 8)
+        {
+            j++;
+            printf("|\n  ---------------------------------\n%c ", rows[j]);
+            counter = 0;
+        }
+        printf("| %c ", board[i]);
+        ++counter;
+    }
+    printf("|\n  ---------------------------------\n\n");
+}    
+
+void chess_game(char player[])
+{
+    int ValueStart = (player[0] - 65) * 8 + (player[1] - 48) - 1; // - 48 bo zero
+    int ValueEnd = (player[3] - 65) * 8 + (player[4] - 48) - 1;   // - 48 bo zero
+    int figura = board[ValueStart];                           // pobranie figury z pola startowego
+    board[ValueStart] = 45;                                   // wyzerowanie pola startowego 45 to wartosc znaku '-'
+    board[ValueEnd] = figura;       // ustawianie na polu pola startowego
+    //system ("clear");                                 
+}
+
+//bialy
+//print szachownica
+//fgets
+//write
+//read
+void str_cli_white(FILE *fp, int sockfd)
+{
+    char sendline[MAXLINE], recvline[MAXLINE];
+
+    bzero(recvline, sizeof(recvline));
+    bzero(sendline, sizeof(sendline));  
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n");
+    display();
+    printf("You're playing as white (which are capital letters)!\n");
+
+    int x = 0;
+
+    while (1)
+    {
+        if(x != 1)
+        {
+            printf("Podaj pole pionka ktorym chcesz wykonac ruch i jego pole docelowe <np. A0 B4>:\n");
+        }
+        x ++; //nie przyznaje sie do tego ;)
+        fgets(sendline, MAXLINE, fp);
+        
+        if(sendline[1] >= 48 && sendline[1] <= 57) //garbage handler
+        {
+            printf("SENDLINE = %s \n", sendline);
+            chess_game(sendline);
+            system("clear");
+            display();
+            printf("Wykonales posuniecie! Czekaj na ruch przeciwnika\n");
+        }
+        
+        write(sockfd, sendline, strlen(sendline));
+
+        //diwe polowy
+         
+        if (read(sockfd, recvline, MAXLINE) == 0)
+        {
+            perror("str_cli_white: server terminated prematurely");
+            exit(0);
+        }       
+        fputs(recvline, stdout);
+        if(recvline[1] >= 48 && recvline[1] <= 57)
+        {
+            chess_game(recvline);
+            system("clear");
+            printf("RECVLINE = %s \n", recvline);
+            display();
+            printf("Drugi gracz wykonal posuniecie!\n");
+        }
+		bzero(recvline, sizeof(recvline));
+    	bzero(sendline, sizeof(sendline));
+    }
+}
+
+void str_cli_black(FILE *fp, int sockfd)
+{
+    char sendline[MAXLINE], recvline[MAXLINE];
+
+    bzero(recvline, sizeof(recvline));
+    bzero(sendline, sizeof(sendline));
+
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n");
+    display();
+    printf("You're playing as black (which are lower case)!\n Wait for start from second player!\n");
+    int x = 0;
+
+    while (1)
+    {
+
+
+        if (read(sockfd, recvline, MAXLINE) == 0)
+        {
+            perror("str_cli_black: server terminated prematurely");
+            exit(0);
+        }
+        
+        printf("Podaj pole pionka ktorym chcesz wykonac ruch i jego pole docelowe <np. A0 B4>:\n");
+
+        fputs(recvline, stdout);
+        if(recvline[1] >= 48 && recvline[1] <= 57)
+        {
+            chess_game(recvline);
+            system("clear");
+            printf("RECVLINE = %s \n", recvline);
+            display();
+            printf("Drugi gracz wykonal posuniecie! Pora na ciebie!\n");
+        }
+
+
+        fgets(sendline, MAXLINE, fp);
+        if(sendline[1] >= 48 && sendline[1] <= 57) //garbage handler
+        {
+            printf("SENDLINE = %s \n", sendline);
+            chess_game(sendline);
+            system("clear");
+            display();
+            printf("Wykonales posuniecie! Czekaj na ruch przeciwnika\n");            
+        }
+        
+        write(sockfd, sendline, strlen(sendline));
+
+		bzero(recvline, sizeof(recvline));
+    	bzero(sendline, sizeof(sendline));
+    }
+}
+
+// koniec szachow
 
 int main(int argc, char **argv)
 {
@@ -79,66 +235,4 @@ int main(int argc, char **argv)
     fflush(stderr);
 
     exit(0);
-}
-
-//bialy
-//print szachownica
-//fgets
-//write
-//read
-void str_cli_white(FILE *fp, int sockfd)
-{
-    char sendline[MAXLINE], recvline[MAXLINE];
-
-    bzero(recvline, sizeof(recvline));
-    bzero(sendline, sizeof(sendline));
-
-    while (1)
-    {
-        fgets(sendline, MAXLINE, fp);
-        write(sockfd, sendline, strlen(sendline));
-
-        if (read(sockfd, recvline, MAXLINE) == 0)
-        {
-            perror("str_cli: server terminated prematurely");
-            exit(0);
-        }
-
-        fputs(recvline, stdout);
-        printf("Enter text:");
-		bzero(recvline, sizeof(recvline));
-    	bzero(sendline, sizeof(sendline));
-    }
-}
-
-
-//czorny
-//read
-//print szachownice
-//fputs
-//print szachownice
-//fgets
-//write
-void str_cli_black(FILE *fp, int sockfd)
-{
-    char sendline[MAXLINE], recvline[MAXLINE];
-
-    bzero(recvline, sizeof(recvline));
-    bzero(sendline, sizeof(sendline));
-
-    while (1)
-    {
-        if (read(sockfd, recvline, MAXLINE) == 0)
-        {
-            perror("str_cli: server terminated prematurely");
-            exit(0);
-        }
-        fputs(recvline, stdout);
-        printf("Enter text:");
-        fgets(sendline, MAXLINE, fp);
-        write(sockfd, sendline, strlen(sendline));
-
-		bzero(recvline, sizeof(recvline));
-    	bzero(sendline, sizeof(sendline));
-    }
 }

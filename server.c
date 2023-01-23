@@ -51,6 +51,8 @@ void play(int sockfd1, int sockfd2) // komunikacja z klientem
     char buf1[MAXLINE];
     char buf2[MAXLINE];
     int player = 1;
+    bzero(buf1, sizeof(buf1));
+    bzero(buf2, sizeof(buf2));
 
     while (1)
     {
@@ -156,8 +158,8 @@ int main(int argc, char **argv)
                 close(listenfd);
                 printf("sockfd1: %d\n", clients[0].sockfd); /* close listening socket */
                 printf("sockfd2: %d\n", clients[1].sockfd);
-                printf("por1: %d\n", ntohs(clients[0].addr.sin6_port));
-                printf("por2: %d\n", ntohs(clients[1].addr.sin6_port));
+                printf("port1: %d\n", ntohs(clients[0].addr.sin6_port));
+                printf("port2: %d\n", ntohs(clients[1].addr.sin6_port));
                 play(clients[0].sockfd, clients[1].sockfd); /* process the request */
                 exit(0);
             }
