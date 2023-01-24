@@ -16,6 +16,8 @@
 #define MAXLINE 100
 #define SA struct sockaddr
 
+
+
 char rows[8] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
 
 char board[64] = {
@@ -62,13 +64,13 @@ void chess_game(char player[])
     board[ValueEnd] = figura;                                     // ustawianie na polu pola startowego
 }
 
-void str_cli_white(FILE *fp, int sockfd)
+void white_figures(FILE *fp, int sockfd)
 {
     char sendline[MAXLINE], recvline[MAXLINE];
 
     bzero(recvline, sizeof(recvline));
     bzero(sendline, sizeof(sendline));
-    printf("\n\n");
+    printf("\n");
     display();
     printf("You're playing as white (which are capital letters)!\n");
 
@@ -96,7 +98,7 @@ void str_cli_white(FILE *fp, int sockfd)
 
         if (read(sockfd, recvline, MAXLINE) == 0)
         {
-            perror("str_cli_white: server terminated prematurely");
+            printf("Rozlaczono z serwerem. Osiagnieto maksymalna ilosc graczy\n");
             exit(0);
         }
         fputs(recvline, stdout);
@@ -112,23 +114,23 @@ void str_cli_white(FILE *fp, int sockfd)
     }
 }
 
-void str_cli_black(FILE *fp, int sockfd)
+void black_figures(FILE *fp, int sockfd)
 {
     char sendline[MAXLINE], recvline[MAXLINE];
 
     bzero(recvline, sizeof(recvline));
     bzero(sendline, sizeof(sendline));
 
-    printf("\n\n");
+    printf("\n");
     display();
-    printf("You're playing as black (which are lower case)!\n Wait for start from second player!\n");
+    printf("You're playing as black (which are lower case)!\nWait for start from second player!\n");
 
     while (1)
     {
 
         if (read(sockfd, recvline, MAXLINE) == 0)
         {
-            perror("str_cli_black: server terminated prematurely");
+            printf("Rozlaczono z serwerem. Osiagnieto maksymalna ilosc graczy\n");
             exit(0);
         }
 
@@ -192,19 +194,20 @@ int main(int argc, char **argv)
     }
     int myNum;
 
-    printf("1- Black pieces\n2- White pieces\n");
+    printf("1- White pieces\n2- Black pieces\n");
     scanf("%d", &myNum);
-    ;
 
     if (myNum == 1)
-    {
-        printf("Playing as black\n\n");
-        str_cli_black(stdin, sockfd); /* do it all */
+    {   
+        system("clear");
+        printf("Playing as white\n\n");
+        white_figures(stdin, sockfd); /* do it all */
     }
     else if (myNum == 2)
     {
-        printf("Playing as white\n\n");
-        str_cli_white(stdin, sockfd); /* do it all */
+        system("clear");
+        printf("Playing as black\n");
+        black_figures(stdin, sockfd); /* do it all */
     }
     else
     {
