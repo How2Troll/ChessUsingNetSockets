@@ -15,7 +15,7 @@
 #include <sys/wait.h>
 
 #define MAXLINE 1024
-#define MAXCLIENTS 10
+#define MAXCLIENTS 100
 #define LISTENQ 2
 
 struct client
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
             ++userId;
         }
 
-        if (userId > 1 && userId < 5)
+        if (userId > 1 && userId < 101) //obsluga na 100 klientow
         {
             if ((userId % 2) == 0)
             {
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
                 close(clients[userId-1].sockfd);
             }
         }
-        if(userId >=5){
+        if(userId >=101){
             printf("Player %d disconnected - too many clients",clients[userId].clientId);
             close(connfd);
             continue;
