@@ -15,7 +15,7 @@
 #include <sys/wait.h>
 
 #define MAXLINE 1024
-
+#define MAXLCIENTS 2
 #define LISTENQ 2
 
 struct client
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
     int listenfd, connfd;
     pid_t childpid;
     socklen_t clilen;
-    struct client clients[2];
+    struct client clients[4];
     struct sockaddr_in6 servaddr;
     void sig_chld(int);
     int userId = 0;
@@ -118,6 +118,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    printf("Waiting for players\n");
+
     while (1)
     {
         clilen = sizeof(clients->addr);
@@ -133,23 +135,29 @@ int main(int argc, char **argv)
         {
             clients[userId].addr = clients->addr;
             clients[userId].sockfd = connfd;
+            clients[userId].clientId = userId;
+            printf("Player %d joined the game\n", clients[userId].clientId + 1);
             ++userId;
         }
 
         if (userId > 1)
         {
-            if ((childpid = fork()) == 0)
+            if ((userId % 2) == 0)
             {
-                close(listenfd);
-                printf("sockfd1: %d\n", clients[0].sockfd);
-                printf("sockfd2: %d\n", clients[1].sockfd);
-                printf("port1: %d\n", ntohs(clients[0].addr.sin6_port));
-                printf("port2: %d\n", ntohs(clients[1].addr.sin6_port));
-                play(clients[0].sockfd, clients[1].sockfd);
-                exit(0);
+                if ((childpid = fork()) == 0)
+                {
+                    close(listenfd);
+                    printf("Game %d starts\n",userId/2);
+                    // printf("sockfd1: %d\n", clients[0].sockfd);
+                    // printf("sockfd2: %d\n", clients[1].sockfd);
+                    // printf("port1: %d\n", ntohs(clients[0].addr.sin6_port));
+                    // printf("port2: %d\n", ntohs(clients[1].addr.sin6_port));
+                    play(clients[userId -2].sockfd, clients[userId-1].sockfd);
+                    exit(0);
+                }
+                close(clients[0].sockfd);
+                close(clients[1].sockfd);
             }
-            close(clients[0].sockfd);
-            close(clients[1].sockfd);
         }
     }
 }
