@@ -194,7 +194,7 @@ int main(int argc, char **argv)
     }
     int myNum;
 
-    printf("1- White pieces\n2- Black pieces\n");
+    printf("Choose side:\n1- White pieces\n2- Black pieces\n");
     scanf("%d", &myNum);
 
     if (myNum == 1)

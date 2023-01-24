@@ -15,7 +15,7 @@
 #include <sys/wait.h>
 
 #define MAXLINE 1024
-#define MAXLCIENTS 2
+#define MAXCLIENTS 10
 #define LISTENQ 2
 
 struct client
@@ -33,6 +33,12 @@ void sig_chld(int signo)
     while ((pid = waitpid(-1, &stat, WNOHANG)) > 0)
         printf("child %d terminated\n", pid);
     return;
+}
+
+void sig_pipe(int signo)
+{
+    printf("Server received SIGPIPE - Default action is exit \n");
+    exit(1);
 }
 
 void play(int sockfd1, int sockfd2) // komunikacja z klientem
@@ -83,12 +89,13 @@ int main(int argc, char **argv)
     int listenfd, connfd;
     pid_t childpid;
     socklen_t clilen;
-    struct client clients[4];
+    struct client clients[MAXCLIENTS];
     struct sockaddr_in6 servaddr;
     void sig_chld(int);
     int userId = 0;
 
     signal(SIGCHLD, sig_chld);
+    signal(SIGPIPE, sig_pipe);
 
     if ((listenfd = socket(AF_INET6, SOCK_STREAM, 0)) < 0)
     {
@@ -140,24 +147,23 @@ int main(int argc, char **argv)
             ++userId;
         }
 
-        if (userId > 1)
+        if (userId > 1 && userId < 5)
         {
             if ((userId % 2) == 0)
             {
                 if ((childpid = fork()) == 0)
                 {
                     close(listenfd);
-                    printf("Game %d starts\n",userId/2);
-                    // printf("sockfd1: %d\n", clients[0].sockfd);
-                    // printf("sockfd2: %d\n", clients[1].sockfd);
-                    // printf("port1: %d\n", ntohs(clients[0].addr.sin6_port));
-                    // printf("port2: %d\n", ntohs(clients[1].addr.sin6_port));
-                    play(clients[userId -2].sockfd, clients[userId-1].sockfd);
+                    printf("Game %d starts\n", userId / 2);
+                    play(clients[userId - 2].sockfd, clients[userId - 1].sockfd);
                     exit(0);
                 }
-                close(clients[0].sockfd);
-                close(clients[1].sockfd);
+                close(clients[userId].sockfd);
             }
+        }
+        if(userId >=5){
+            close(connfd);
+            continue;
         }
     }
 }
