@@ -158,10 +158,12 @@ int main(int argc, char **argv)
                     play(clients[userId - 2].sockfd, clients[userId - 1].sockfd);
                     exit(0);
                 }
-                close(clients[userId].sockfd);
+                close(clients[userId-2].sockfd);
+                close(clients[userId-1].sockfd);
             }
         }
         if(userId >=5){
+            printf("Player %d disconnected - too many clients",clients[userId].clientId);
             close(connfd);
             continue;
         }

@@ -130,7 +130,7 @@ void black_figures(FILE *fp, int sockfd)
 
         if (read(sockfd, recvline, MAXLINE) == 0)
         {
-            printf("Rozlaczono z serwerem. Osiagnieto maksymalna ilosc graczy\n");
+            printf("Rozlaczono z serwerem.\n");
             exit(0);
         }
 
